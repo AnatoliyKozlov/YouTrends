@@ -6,6 +6,9 @@ import java.util.Map.Entry;
 import com.google.common.collect.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,71 +29,35 @@ public class FeedController
     private ChannelAnalytics channelAnalytics;
 
     @RequestMapping("/trends")
-    public List<Video> getTrends()
+    public ResponseEntity<List<Video>> getTrends()
     {
-        List<Video> feed = Lists.newArrayList();
-
-        try
-        {
-            feed = lastFeedContainer.getAllFeed();
-        }
-        catch (Exception e)
-        {
-            log.error("Error", e);
-        }
-
-        return feed;
+       return ResponseEntity.ok(lastFeedContainer.getAllFeed());
     }
 
     @RequestMapping("/popularWords")
-    public  List<Entry<String, Integer>> getPopularWords(@RequestParam(value = "limit", defaultValue = "100") long limit)
+    public ResponseEntity<List<Entry<String, Integer>>> getPopularWords(@RequestParam(value = "limit", defaultValue = "100") long limit)
     {
-        List<Entry<String, Integer>> words = Lists.newArrayList();
-
-        try
-        {
-            words = wordsFrequencyAnalyser.getPopularWords(limit);
-        }
-        catch (Exception e)
-        {
-            log.error("Error", e);
-        }
-
-        return words;
+        return ResponseEntity.ok(wordsFrequencyAnalyser.getPopularWords(limit));
     }
 
     @RequestMapping("/topByHoursCount")
-    public  List<Entry<String, Integer>> getTopByHoursCount()
+    public ResponseEntity<List<Entry<String, Integer>>> getTopByHoursCount()
     {
-        List<Entry<String, Integer>> channels = Lists.newArrayList();
-
-        try
-        {
-            channels = channelAnalytics.getTopChannelsByHoursInTrends();
-        }
-        catch (Exception e)
-        {
-            log.error("Error", e);
-        }
-
-        return channels;
+       return ResponseEntity.ok(channelAnalytics.getTopChannelsByHoursInTrends());
     }
 
     @RequestMapping("/topByVideosCount")
-    public  List<Entry<String, Integer>> getTopByVideosCount()
+    public ResponseEntity<List<Entry<String, Integer>>> getTopByVideosCount()
     {
-        List<Entry<String, Integer>> channels = Lists.newArrayList();
+       return ResponseEntity.ok(channelAnalytics.getTopChannelsByCountUniqueVideoInTrends());
+    }
 
-        try
-        {
-            channels = channelAnalytics.getTopChannelsByCountUniqueVideoInTrends();
-        }
-        catch (Exception e)
-        {
-            log.error("Error", e);
-        }
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity exceptionsHandler(Exception e)
+    {
+        log.error("Error", e);
 
-        return channels;
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
 }
